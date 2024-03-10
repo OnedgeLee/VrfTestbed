@@ -13,6 +13,14 @@ namespace VrfTestbed.VrfAgent
             _receivedLots = new List<Lot>();
         }
 
+        public new void NewRound(long height, int round)
+        {
+            _height = height;
+            _round = round;
+            _proofSets.TryAdd((height, round), new ProofSet(height, round));
+        }
+
+
         public new void PutLot(Lot lot)
         {
             _receivedLots.Add(lot);

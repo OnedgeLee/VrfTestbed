@@ -1,12 +1,13 @@
 ﻿using VrfTestbed.VrfLib;
 using VrfTestbed.Consensus;
+using System.Collections.Concurrent;
 
 namespace VrfTestbed.VrfAgent
 {
     public class Agent
     {
         protected BlsPrivateKey _blsPrivateKey;
-        protected ProofSet _proofSet;
+        protected ConcurrentDictionary<(long, int), ProofSet> _proofSets;
         protected long _height;
         protected int _round;
         protected HashSet<Agent> _peers;
@@ -15,10 +16,25 @@ namespace VrfTestbed.VrfAgent
         public Agent(BlsPrivateKey blsPrivateKey)
         {
             _blsPrivateKey = blsPrivateKey;
-            _proofSet = new ProofSet(0, 0);
+            _proofSets = new ConcurrentDictionary<(long, int), ProofSet>();
             _peers = new HashSet<Agent>();
             _validatorSet = new ValidatorSet();
         }
+
+        public ProofSet CurrentProofSet => _proofSets.GetOrAdd((_height, _round), new ProofSet(_height, _round));
+
+        public HashSet<Agent> Peers => _peers;
+
+        public long Height => _height; 
+
+        public int Round => _round;
+
+        public ValidatorSet ValidatorSet => _validatorSet;
+
+        public ConcurrentDictionary<(long, int), ProofSet> ProofSets => _proofSets;
+
+        public bool AddProofSet(long height, int round)
+            => _proofSets.TryAdd((height, round), new ProofSet(height, round));
 
         public void AddPeer(Agent agent)
         {
@@ -35,11 +51,18 @@ namespace VrfTestbed.VrfAgent
             _validatorSet.Update(validator);
         }
 
+        public void UpdateValidatorSet(ValidatorSet validatorSet)
+        {
+            _validatorSet = validatorSet;
+        }
+
         public void NewRound(long height, int round)
         {
             _height = height;
             _round = round;
-            _proofSet = new ProofSet(height, round);
+            _proofSets.TryAdd((height, round), new ProofSet(height, round));
+
+            InsertLot();
         }
 
         public Lot GenerateLot(long height, int round)
@@ -52,9 +75,10 @@ namespace VrfTestbed.VrfAgent
 
         public void PutLot(Lot lot)
         {
-            if (_validatorSet.ContainsPublicKey(lot.BlsPublicKey))
+            if (_validatorSet.GetValidator(lot.BlsPublicKey) is Validator validator)
             {
-                _proofSet.Add(lot.Signature, lot.BlsPublicKey);
+                ProofSet proofSet = _proofSets.GetOrAdd((lot.Height, lot.Round), new ProofSet(lot.Height, lot.Round));
+                proofSet.Add(lot.BlsPublicKey, lot.Signature, validator.Power);
             }
         }
 
@@ -73,13 +97,13 @@ namespace VrfTestbed.VrfAgent
 
         public void VerifyProof()
         {
-            _proofSet.Verify();
+            CurrentProofSet.Verify();
         }
 
-        public int SeedInt() => _proofSet.SeedInt();
+        public int Seed() => CurrentProofSet.Seed();
 
         public Validator GetProposer() 
-            => Sortition.Execute(_validatorSet, _proofSet.Seed()).First();
+            => new Validator(CurrentProofSet.DominantProof.Item1, CurrentProofSet.DominantProof.Item3);
 
         public BlsPublicKey BlsPublicKey => _blsPrivateKey.PublicKey;
     }

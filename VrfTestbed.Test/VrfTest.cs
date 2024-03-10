@@ -6,6 +6,20 @@ namespace VrfTestbed.Test
 {
     public class VrfTest
     {
+        public ProofSet ConstructProofSet(long height, int round, IEnumerable<BlsPrivateKey> privateKeys)
+        {
+            var payload = new LotMetadata(height, round).ByteArray;
+            var sigs = privateKeys.Select(key => key.Sign(payload));
+            var proofSet = new ProofSet(payload);
+            foreach (var pk in privateKeys)
+            {
+                proofSet.Add(pk.PublicKey, pk.Sign(payload), BigInteger.One);
+            }
+
+            return proofSet;
+        }
+
+
         [Fact]
         public void DeterministicSortition()
         {
@@ -23,15 +37,12 @@ namespace VrfTestbed.Test
                 validatorSet = validatorSet.Update(new Validator(key.PublicKey, BigInteger.One));
             }
 
-            var payload = new LotMetadata(10, 10).ByteArray;
-            var sigs = privateKeys.Select(key => key.Sign(payload));
-            var proof = new VrfProof().Aggregate(sigs);
-
-            var proposer = Sortition.Execute(validatorSet, proof.Seed());
+            var proofSet = ConstructProofSet(10, 10, privateKeys);
+            var proposer = proofSet.DominantProof.Item1;
 
             for (int i = 0; i < 100; i++)
             {
-                Assert.Equal(proposer, Sortition.Execute(validatorSet, proof.Seed()));
+                Assert.Equal(proposer, ConstructProofSet(10, 10, privateKeys).DominantProof.Item1);
             }
         }
 
@@ -52,15 +63,12 @@ namespace VrfTestbed.Test
                 validatorSet.Update(new Validator(key.PublicKey, BigInteger.One));
             }
 
-            var payload = new LotMetadata(10, 10).ByteArray;
-            var sigs = privateKeys.Select(key => key.Sign(payload));
-            var proof = new VrfProof().Aggregate(sigs);
-
-            var seed = proof.SeedInt();
+            var proofSet = ConstructProofSet(10, 10, privateKeys);
+            var seed = proofSet.Seed();
 
             for (int i = 0; i < 100; i++)
             {
-                Assert.Equal(seed, proof.SeedInt());
+                Assert.Equal(seed, ConstructProofSet(10, 10, privateKeys).DominantProof.Item2.Seed());
             }
         }
     }
