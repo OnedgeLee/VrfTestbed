@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 
 namespace VrfTestbed.VrfLib
 {
-    public class Proof
+    public class Proof : IEquatable<Proof>, IComparable<Proof>, IComparable
     {
         private readonly BlsSignature _signature;
         private ImmutableArray<byte>? _hash;
@@ -34,6 +34,8 @@ namespace VrfTestbed.VrfLib
             }
         }
 
+        public BigInteger HashInt => HashToInt(Hash);
+
         public bool Verify(BlsPublicKey publicKey, IReadOnlyList<byte> payload)
             => _signature.Verify(new BlsPublicKey[] { publicKey }, payload);
 
@@ -45,10 +47,9 @@ namespace VrfTestbed.VrfLib
                 : BitConverter.ToInt32(seed, 0);
         }
 
-        public BigInteger Select(int expectedSize, BigInteger power, BigInteger totalPower)
+        public BigInteger Draw(int expectedSize, BigInteger power, BigInteger totalPower)
         {
-            double targetProb = (double)new BigInteger(Hash.ToArray(), isUnsigned: true, isBigEndian: false)
-                / (double)new BigInteger(Enumerable.Repeat(byte.MaxValue, 64).ToArray(), isUnsigned: true, isBigEndian: false);
+            double targetProb = (double)HashInt / (double)HashToInt(Enumerable.Repeat(byte.MaxValue, 64).ToImmutableArray());
 
             return BinomialQuantileFunction(targetProb, (double)expectedSize / (double)totalPower, power);
         }
@@ -92,5 +93,21 @@ namespace VrfTestbed.VrfLib
             }
             return nCr;
         }
+
+        public static BigInteger HashToInt(ImmutableArray<byte> hash)
+            => new BigInteger(hash.ToArray(), isUnsigned: true, isBigEndian: false);
+
+        public bool Equals(Proof? other)
+            => Signature.Equals(other?.Signature);
+
+        public int CompareTo(Proof? other)
+            => other is Proof otherProof
+                ? (HashInt - otherProof.HashInt).Sign
+                : throw new ArgumentException($"Argument {nameof(other)} is null");
+
+        public int CompareTo(object? obj)
+            => obj is Proof otherProof
+                ? CompareTo(otherProof)
+                : throw new ArgumentException($"Argument {nameof(obj)} is not an ${nameof(Proof)}.", nameof(obj));
     }
 }

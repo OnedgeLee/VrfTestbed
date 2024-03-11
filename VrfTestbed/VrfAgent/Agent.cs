@@ -102,8 +102,9 @@ namespace VrfTestbed.VrfAgent
 
         public int Seed() => CurrentProofSet.Seed();
 
-        public Validator GetProposer() 
-            => new Validator(CurrentProofSet.DominantProof.Item1, CurrentProofSet.DominantProof.Item3);
+        public Validator GetProposer()
+            => _validatorSet.GetValidator(CurrentProofSet.DominantProof.Item1)
+                ?? throw new Exception("There are no dominant proof");
 
         public BlsPublicKey BlsPublicKey => _blsPrivateKey.PublicKey;
     }

@@ -98,7 +98,7 @@ namespace VrfTestbed
                     break;
 
                 case "list seeds all":
-                    application.SeedAll();
+                    application.ListSeeds();
                     Console.WriteLine("---\n");
                     break;
 
@@ -123,7 +123,12 @@ namespace VrfTestbed
                     break;
 
                 case "list proposers all":
-                    application.ProposerAll();
+                    application.ListProposers();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("sampling").IsMatch(cmd):
+                    application.Sampling(Int32.Parse(Regex.Match(cmd, @"\d+").Value), Int32.Parse(Regex.Match(cmd, @"(\d+)(?!.*\d)").Value));
                     Console.WriteLine("---\n");
                     break;
 

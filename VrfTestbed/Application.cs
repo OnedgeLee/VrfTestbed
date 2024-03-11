@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Concurrent;
 using System.Numerics;
 using VrfTestbed.Consensus;
 using VrfTestbed.VrfAgent;
@@ -10,6 +10,8 @@ namespace VrfTestbed
     {
         private List<Agent> _agents;
         private ValidatorSet _validatorSet;
+        private long _height;
+        private int _round;
 
         public Application()
         {
@@ -23,6 +25,7 @@ namespace VrfTestbed
         {
             Console.WriteLine(
 @"VrfTestbed Commands
+
 add agent: Add an agent
 add powered agent: Add an agent and update validator set
 add agents #: Add number of agents
@@ -41,10 +44,11 @@ apply validator set: Apply validator set to agents
 list validator set # : List validator set of an agent
 
 list proof set #: List ProofSets of an agent
-list seeds all: List seeds of all agents
-list proposers all: List proposers of all agents
+list seeds: List seeds of all agents
+list proposers: List proposers of all agents
 
-new round # #: Start new round with given height, round");
+new round # #: Start new round with given height, round
+sampling # #: Samples from sequential heights, rounds (total height * round rounds)");
         }
 
         public void AddAgent()
@@ -151,11 +155,18 @@ new round # #: Start new round with given height, round");
         {
             try
             {
+                if (height < _height || (height == _height && round <= _round))
+                {
+                    throw new ArgumentException($"Retrograde round - from {_height}:{_round} to {height}:{round}");
+                }
+
                 Console.WriteLine($"Starting new round: height {height}, round {round}");
                 foreach (Agent agent in _agents)
                 {
                     agent.NewRound(height, round);
                 }
+                _height = height;
+                _round = round;
             }
             catch (Exception ex)
             {
@@ -228,7 +239,7 @@ new round # #: Start new round with given height, round");
             }
         }
 
-        public void SeedAll()
+        public void ListSeeds()
         {
             try
             {
@@ -251,7 +262,7 @@ new round # #: Start new round with given height, round");
             }
         }
 
-        public void ProposerAll()
+        public void ListProposers()
         {
             try
             {
@@ -266,6 +277,38 @@ new round # #: Start new round with given height, round");
                         Console.WriteLine($"{item.index} : {item.value.BlsPublicKey} : Innocent : {item.value.GetProposer()}");
                     }
 
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}");
+            }
+        }
+
+        public void Sampling(int heights, int rounds)
+        {
+            try
+            {
+                ConcurrentDictionary<Validator, int> dict = new ConcurrentDictionary<Validator, int>();
+                Validator proposer;
+                long h0;
+                int r0;
+                
+                h0 = _height;
+                for (long h = _height + 1; h <= h0 + heights; h++)
+                {
+                    r0 = _round;
+                    for (int r = _round + 1; r <= r0 + rounds; r++)
+                    {
+                        NewRound(h, r);
+                        proposer = _agents[0].GetProposer();
+                        dict.AddOrUpdate(proposer, 1, (k, v) => v + 1);
+                    }
+                }
+
+                foreach (var item in dict)
+                {
+                    Console.WriteLine($"{item.Key} : {item.Value}times : {((float)item.Value) / ((float)(heights * rounds)) * 100}%");
                 }
             }
             catch (Exception ex)

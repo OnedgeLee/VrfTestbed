@@ -9,7 +9,7 @@ namespace VrfTestbed.VrfLib
         private IReadOnlyList<byte> _payload;
         private ConcurrentDictionary<BlsPublicKey, (Proof, BigInteger)> _proofs;
         private BlsSignature? _aggregatedSignature;
-        private (BlsPublicKey, Proof, BigInteger)? _dominantProof;
+        private (BlsPublicKey, Proof)? _dominantProof;
         private BigInteger _totalPower;
 
         public ProofSet(IReadOnlyList<byte> payload)
@@ -61,7 +61,7 @@ namespace VrfTestbed.VrfLib
             => _aggregatedSignature?.Verify(_proofs.Keys.ToArray(), _payload) ?? throw new Exception("Empty Proof");
 
 
-        public (BlsPublicKey, Proof, BigInteger) DominantProof
+        public (BlsPublicKey, Proof) DominantProof
         {
             get
             {
@@ -76,14 +76,19 @@ namespace VrfTestbed.VrfLib
                 }
                 else
                 {
-                    var selectedItem = _proofs.MaxBy(proof => proof.Value.Item1.Select(1, proof.Value.Item2, _totalPower));
-                    _dominantProof = (selectedItem.Key, selectedItem.Value.Item1, selectedItem.Value.Item2);
-                    return ((BlsPublicKey, Proof, BigInteger))_dominantProof;
+                    _dominantProof = HighestProofs!.MaxBy(proof => proof.Item2);
+                    return ((BlsPublicKey, Proof))_dominantProof;
                 }
             }
         }
 
         public int Seed()
             => DominantProof.Item2.Seed();
+
+        private IEnumerable<(BlsPublicKey, Proof)>? HighestProofs
+            => _proofs
+                .GroupBy(proof => proof.Value.Item1.Draw(1, proof.Value.Item2, _totalPower))
+                .MaxBy(group => group.Key)?
+                .Select(item => (item.Key, item.Value.Item1));
     }
 }
