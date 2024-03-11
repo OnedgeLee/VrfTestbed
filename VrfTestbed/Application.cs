@@ -17,25 +17,34 @@ namespace VrfTestbed
             _validatorSet = new ValidatorSet();
         }
 
+        public List<Agent> Agents => _agents;
+
         public void Help()
         {
             Console.WriteLine(
 @"VrfTestbed Commands
-add-agent: Add an agent
-add-agents #: Add number of agents
-add-byzantine: Add an byzantine agent
-add-byzantines #: Add number of byzantine agents
-list-agents: List whole agent (include byzantine)
-remove-agent #: Remove an agent with index number
-update-peers: Update peers
-list-peers #: List peers of agent
-new-round # #: Start new round with given height, round
-seed-all: List seeds of all agents
-list-proof-set #: List ProofSets of an agent
-add-validator-set # #: Add validator to validator set
-apply-validator-set: Apply validator set to agents
-list-validator-set # : List ValidatorSet of an agent
-proposer-all: List proposers of all agents");
+add agent: Add an agent
+add powered agent: Add an agent and update validator set
+add agents #: Add number of agents
+add powered agents #: Add number of agents and update validator set
+add byzantine: Add an byzantine agent
+add byzantines #: Add number of byzantine agents
+list agents: List whole agent (include byzantine)
+remove agent #: Remove an agent with index number
+remove powered agent #: Remove an agent with index number and update validator set
+
+update peers: Update peers
+list peers #: List peers of agent
+
+update validator set # #: Update validator set
+apply validator set: Apply validator set to agents
+list validator set # : List validator set of an agent
+
+list proof set #: List ProofSets of an agent
+list seeds all: List seeds of all agents
+list proposers all: List proposers of all agents
+
+new round # #: Start new round with given height, round");
         }
 
         public void AddAgent()
@@ -170,11 +179,12 @@ proposer-all: List proposers of all agents");
             }
         }
 
-        public void AddValidatorSet(int index, int power)
+        public void UpdateValidatorSet(int index, int power)
         {
             try
             {
                 _validatorSet = _validatorSet.Update(new Validator(_agents[index].BlsPublicKey, new BigInteger(power)));
+                Console.WriteLine($"Updated validator : {_agents[index].BlsPublicKey} : {power}");
             }
             catch (Exception ex)
             {

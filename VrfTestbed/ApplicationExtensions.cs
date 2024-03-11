@@ -13,85 +13,122 @@ namespace VrfTestbed
                     Console.WriteLine("---\n");
                     break;
 
-                case "add-agent":
+                case "add agent":
                     application.AddAgent();
-                    Console.WriteLine("---\n");
-                    break;
-
-                case var cmd when new Regex("add-agents").IsMatch(cmd):
-                    for (int i = 0; i < Int32.Parse(Regex.Match(cmd, @"\d+").Value); i++)
-                    {
-                        application.AddAgent();
-                    }
-                    Console.WriteLine("---\n");
-                    break;
-
-                case "add-byzantine":
-                    application.AddByzantine();
-                    Console.WriteLine("---\n");
-                    break;
-
-                case var cmd when new Regex("add-byzantines").IsMatch(cmd):
-                    for (int i = 0; i < Int32.Parse(Regex.Match(cmd, @"\d+").Value); i++)
-                    {
-                        application.AddByzantine();
-                    }
-                    Console.WriteLine("---\n");
-                    break;
-
-                case "list-agents":
-                    application.ListAgents();
-                    Console.WriteLine("---\n");
-                    break;
-
-                case var cmd when new Regex("list-peers").IsMatch(cmd):
-                    application.ListPeers(Int32.Parse(Regex.Match(cmd, @"\d+").Value));
-                    Console.WriteLine("---\n");
-                    break;
-
-                case "update-peers":
                     application.UpdatePeers();
                     Console.WriteLine("---\n");
                     break;
 
-                case var cmd when new Regex("remove-agent").IsMatch(cmd):
+                case "add powered agent":
+                    application.AddAgent();
+                    application.UpdateValidatorSet(application.Agents.Count - 1, 1);
+                    application.ApplyValidatorSet();
+                    application.UpdatePeers();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("add agents").IsMatch(cmd):
+                    for (int i = 0; i < Int32.Parse(Regex.Match(cmd, @"\d+").Value); i++)
+                    {
+                        application.AddAgent();
+                    }
+                    application.UpdatePeers();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("add powered agents").IsMatch(cmd):
+                    for (int i = 0; i < Int32.Parse(Regex.Match(cmd, @"\d+").Value); i++)
+                    {
+                        application.AddAgent();
+                        application.UpdateValidatorSet(application.Agents.Count - 1, 1);
+                    }
+                    application.ApplyValidatorSet();
+                    application.UpdatePeers();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case "add byzantine":
+                    application.AddByzantine();
+                    application.UpdatePeers();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("add byzantines").IsMatch(cmd):
+                    for (int i = 0; i < Int32.Parse(Regex.Match(cmd, @"\d+").Value); i++)
+                    {
+                        application.AddByzantine();
+                    }
+                    application.UpdatePeers();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("remove agent").IsMatch(cmd):
                     application.RemoveAgent(Int32.Parse(Regex.Match(cmd, @"\d+").Value));
+                    application.UpdatePeers();
                     Console.WriteLine("---\n");
                     break;
 
-                case var cmd when new Regex("new-round").IsMatch(cmd):
-                    application.NewRound(Int32.Parse(Regex.Match(cmd, @"\d+").Value), Int32.Parse(Regex.Match(cmd, @"(\d+)(?!.*\d)").Value));
-                    Console.WriteLine("---\n");
-                    break;
-
-                case "seed-all":
-                    application.SeedAll();
-                    Console.WriteLine("---\n");
-                    break;
-
-                case var cmd when new Regex("list-proof-set").IsMatch(cmd):
-                    application.ListProofSet(Int32.Parse(Regex.Match(cmd, @"\d+").Value));
-                    Console.WriteLine("---\n");
-                    break;
-
-                case var cmd when new Regex("add-validator-set").IsMatch(cmd):
-                    application.AddValidatorSet(Int32.Parse(Regex.Match(cmd, @"\d+").Value), Int32.Parse(Regex.Match(cmd, @"(\d+)(?!.*\d)").Value));
-                    Console.WriteLine("---\n");
-                    break;
-
-                case "apply-validator-set":
+                case var cmd when new Regex("remove powered agent").IsMatch(cmd):
+                    var index = Int32.Parse(Regex.Match(cmd, @"\d+").Value);
+                    var agent = application.Agents[index];
+                    application.UpdateValidatorSet(index, 0);
+                    application.RemoveAgent(index);
                     application.ApplyValidatorSet();
                     Console.WriteLine("---\n");
                     break;
 
-                case var cmd when new Regex("list-validator-set").IsMatch(cmd):
+                case "list agents":
+                    application.ListAgents();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("list peers").IsMatch(cmd):
+                    application.ListPeers(Int32.Parse(Regex.Match(cmd, @"\d+").Value));
+                    Console.WriteLine("---\n");
+                    break;
+
+                case "update peers":
+                    application.UpdatePeers();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("new round").IsMatch(cmd):
+                    application.NewRound(Int32.Parse(Regex.Match(cmd, @"\d+").Value), Int32.Parse(Regex.Match(cmd, @"(\d+)(?!.*\d)").Value));
+                    Console.WriteLine("---\n");
+                    break;
+
+                case "list seeds all":
+                    application.SeedAll();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("list proof set").IsMatch(cmd):
+                    application.ListProofSet(Int32.Parse(Regex.Match(cmd, @"\d+").Value));
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("update validator set").IsMatch(cmd):
+                    application.UpdateValidatorSet(Int32.Parse(Regex.Match(cmd, @"\d+").Value), Int32.Parse(Regex.Match(cmd, @"(\d+)(?!.*\d)").Value));
+                    Console.WriteLine("---\n");
+                    break;
+
+                case "apply validator set":
+                    application.ApplyValidatorSet();
+                    Console.WriteLine("---\n");
+                    break;
+
+                case var cmd when new Regex("list validator set").IsMatch(cmd):
                     application.ListValidatorSet(Int32.Parse(Regex.Match(cmd, @"\d+").Value));
                     Console.WriteLine("---\n");
                     break;
 
-                case "proposer-all":
+                case "list proposers all":
                     application.ProposerAll();
                     Console.WriteLine("---\n");
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid command");
                     break;
             }
         }
