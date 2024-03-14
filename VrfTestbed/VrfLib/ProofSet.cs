@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Dasync.Collections;
+using System.Collections.Concurrent;
 using System.Numerics;
 using VrfTestbed.Consensus;
 
@@ -8,15 +9,14 @@ namespace VrfTestbed.VrfLib
     {
         private IReadOnlyList<byte> _payload;
         private ConcurrentDictionary<BlsPublicKey, (Proof, BigInteger)> _proofs;
-        private BlsSignature? _aggregatedSignature;
         private (BlsPublicKey, Proof)? _dominantProof;
         private BigInteger _totalPower;
+        private bool _verified;
 
         public ProofSet(IReadOnlyList<byte> payload)
         {
             _payload = payload;
             _proofs = new ConcurrentDictionary<BlsPublicKey, (Proof, BigInteger)>();
-            _aggregatedSignature = null;
             _dominantProof = null;
             _totalPower = BigInteger.Zero;
         }
@@ -24,13 +24,12 @@ namespace VrfTestbed.VrfLib
         public ProofSet(long height, int round)
             : this(new LotMetadata(height, round).ByteArray) { }
 
+        public int Count => _proofs.Count;
+
         public void Add(BlsPublicKey publicKey, Proof proof, BigInteger power)
         {
             if (proof.Verify(publicKey, _payload) && _proofs.TryAdd(publicKey, (proof, power)))
             {
-                _aggregatedSignature = _aggregatedSignature is { } sig
-                    ? sig.Aggregate(proof.Signature)
-                    : proof.Signature;
                 _dominantProof = null;
                 _totalPower += power;
             }
@@ -56,16 +55,20 @@ namespace VrfTestbed.VrfLib
             }
         }
 
-
         public bool Verify()
-            => _aggregatedSignature?.Verify(_proofs.Keys.ToArray(), _payload) ?? throw new Exception("Empty Proof");
-
+        {
+            ConcurrentBag<bool> results = new ConcurrentBag<bool>();
+            Parallel.ForEach(
+                _proofs,
+                proof => results.Add(proof.Value.Item1.Verify(proof.Key, _payload)));
+            return results.All(result => result);
+        }
 
         public (BlsPublicKey, Proof) DominantProof
         {
             get
             {
-                if (_aggregatedSignature is null)
+                if (_proofs.IsEmpty)
                 {
                     throw new Exception("Empty Proof");
                 }

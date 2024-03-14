@@ -48,7 +48,9 @@ list seeds: List seeds of all agents
 list proposers: List proposers of all agents
 
 new round # #: Start new round with given height, round
-sampling # #: Samples from sequential heights, rounds (total height * round rounds)");
+sampling # #: Samples from sequential heights, rounds (total height * round rounds)
+
+power from sheet: Add agents and update validator set from the sheet. (0-idx validator is an Agent, and the other is DummyAgent)");
         }
 
         public void AddAgent()
@@ -65,6 +67,22 @@ sampling # #: Samples from sequential heights, rounds (total height * round roun
             }
         }
 
+        public void AddAgent(int power)
+        {
+            try
+            {
+                Agent agent = new Agent(new BlsPrivateKey());
+                _agents.Add(agent);
+                UpdateValidatorSet(_agents.Count - 1, power);
+                ApplyValidatorSet();
+                Console.WriteLine($"Added new agent : {agent.BlsPublicKey}:{power}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}");
+            }
+        }
+
         public void AddByzantine()
         {
             try
@@ -72,6 +90,36 @@ sampling # #: Samples from sequential heights, rounds (total height * round roun
                 Agent agent = new ByzantineAgent(new BlsPrivateKey());
                 Console.WriteLine($"Added new byzantine : {agent.BlsPublicKey}");
                 _agents.Add(agent);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}");
+            }
+        }
+
+        public void AddDummy()
+        {
+            try
+            {
+                Agent agent = new DummyAgent(new BlsPrivateKey());
+                Console.WriteLine($"Added new dummy : {agent.BlsPublicKey}");
+                _agents.Add(agent);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}");
+            }
+        }
+
+        public void AddDummy(int power)
+        {
+            try
+            {
+                Agent agent = new DummyAgent(new BlsPrivateKey());
+                _agents.Add(agent);
+                UpdateValidatorSet(_agents.Count - 1, power);
+                ApplyValidatorSet();
+                Console.WriteLine($"Added new agent : {agent.BlsPublicKey}:{power}");
             }
             catch (Exception ex)
             {
@@ -301,6 +349,18 @@ sampling # #: Samples from sequential heights, rounds (total height * round roun
                     for (int r = _round + 1; r <= r0 + rounds; r++)
                     {
                         NewRound(h, r);
+                        bool lacked = true;
+                        while (lacked)
+                        {
+                            lacked = _agents[0].CurrentProofSet.Count < _validatorSet.TotalCount;
+
+                            if (lacked )
+                            {
+                                Task.Delay(100).Wait();
+                            }
+                            
+                        }
+
                         proposer = _agents[0].GetProposer();
                         dict.AddOrUpdate(proposer, 1, (k, v) => v + 1);
                     }

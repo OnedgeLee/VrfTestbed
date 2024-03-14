@@ -3,14 +3,11 @@ using VrfTestbed.Consensus;
 
 namespace VrfTestbed.VrfAgent
 {
-    public class ByzantineAgent : Agent
+    public class DummyAgent : Agent
     {
-        private List<Lot> _receivedLots;
-
-        public ByzantineAgent(BlsPrivateKey blsPrivateKey)
+        public DummyAgent(BlsPrivateKey blsPrivateKey)
             :base(blsPrivateKey) 
         {
-            _receivedLots = new List<Lot>();
         }
 
         public new void NewRound(long height, int round)
@@ -23,7 +20,6 @@ namespace VrfTestbed.VrfAgent
 
         public new void PushLot(Lot lot)
         {
-            _receivedLots.Add(lot);
         }
 
         public BlsPrivateKey PrivateKey => _blsPrivateKey;

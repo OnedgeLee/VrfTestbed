@@ -54,7 +54,7 @@ namespace VrfTestbed.VrfLib
             return BinomialQuantileFunction(targetProb, (double)expectedSize / (double)totalPower, power);
         }
 
-        private BigInteger BinomialQuantileFunction(double targetProb, double prob, BigInteger nSample)
+        public static BigInteger BinomialQuantileFunction(double targetProb, double prob, BigInteger nSample)
         {
             // Cumulative binomial distribution
             double cumulativePositiveProb = 0;
@@ -91,6 +91,7 @@ namespace VrfTestbed.VrfLib
             {
                 nCr /= i;
             }
+
             return nCr;
         }
 
