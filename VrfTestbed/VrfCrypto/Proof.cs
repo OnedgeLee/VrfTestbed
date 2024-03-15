@@ -4,19 +4,21 @@ using System.Numerics;
 using System.Security.Cryptography;
 
 
-namespace VrfTestbed.VrfLib
+namespace VrfTestbed.VrfCrypto
 {
     public class Proof : IEquatable<Proof>, IComparable<Proof>, IComparable
     {
-        private readonly BlsSignature _signature;
+        private readonly ImmutableArray<byte> _piBytes;
         private ImmutableArray<byte>? _hash;
 
-        public Proof(BlsSignature signature) 
+        public Proof(IReadOnlyList<byte> piBytes)
         {
-            _signature = signature;
+            _piBytes = piBytes.ToImmutableArray();
         }
 
-        public BlsSignature Signature => _signature;
+        public ImmutableArray<byte> ByteArray => _piBytes;
+
+        public byte[] ToByteArray() => ByteArray.ToArray();
 
         public ImmutableArray<byte> Hash
         {
@@ -28,7 +30,7 @@ namespace VrfTestbed.VrfLib
                 }
                 else
                 {
-                    _hash = HashDigest<SHA512>.DeriveFrom(_signature.ByteArray).ByteArray;
+                    _hash = HashDigest<SHA512>.DeriveFrom(ByteArray).ByteArray;
                     return (ImmutableArray<byte>)_hash;
                 }
             }
@@ -36,8 +38,8 @@ namespace VrfTestbed.VrfLib
 
         public BigInteger HashInt => HashToInt(Hash);
 
-        public bool Verify(BlsPublicKey publicKey, IReadOnlyList<byte> payload)
-            => _signature.Verify(new BlsPublicKey[] { publicKey }, payload);
+        public bool Verify(PublicKey publicKey, byte[] payload)
+            => publicKey.VerifyProof(payload, this);
 
         public int Seed()
         {
@@ -51,7 +53,7 @@ namespace VrfTestbed.VrfLib
         {
             double targetProb = (double)HashInt / (double)HashToInt(Enumerable.Repeat(byte.MaxValue, 64).ToImmutableArray());
 
-            return BinomialQuantileFunction(targetProb, (double)expectedSize / (double)totalPower, power);
+            return BinomialQuantileFunction(targetProb, expectedSize / (double)totalPower, power);
         }
 
         public static BigInteger BinomialQuantileFunction(double targetProb, double prob, BigInteger nSample)
@@ -76,15 +78,15 @@ namespace VrfTestbed.VrfLib
         {
             return Combination(nSample, nPositive)
                 * Math.Pow(prob, nPositive)
-                * Math.Pow(1d - prob, (nSample - nPositive));
+                * Math.Pow(1d - prob, nSample - nPositive);
         }
 
         private static double Combination(double n, double r)
         {
             double nCr = 1;
-            for (double i = n; i > (n - r); i--)
+            for (double i = n; i > n - r; i--)
             {
-                 nCr *= i;
+                nCr *= i;
             }
 
             for (double i = 1; i <= r; i++)
@@ -99,7 +101,10 @@ namespace VrfTestbed.VrfLib
             => new BigInteger(hash.ToArray(), isUnsigned: true, isBigEndian: false);
 
         public bool Equals(Proof? other)
-            => Signature.Equals(other?.Signature);
+            => ByteArray.Equals(other?.ByteArray);
+
+        public override bool Equals(object? obj)
+            => Equals(obj as Proof);
 
         public int CompareTo(Proof? other)
             => other is Proof otherProof
@@ -110,5 +115,8 @@ namespace VrfTestbed.VrfLib
             => obj is Proof otherProof
                 ? CompareTo(otherProof)
                 : throw new ArgumentException($"Argument {nameof(obj)} is not an ${nameof(Proof)}.", nameof(obj));
+
+        public override int GetHashCode()
+            => ByteUtil.CalculateHashCode(ToByteArray());
     }
 }

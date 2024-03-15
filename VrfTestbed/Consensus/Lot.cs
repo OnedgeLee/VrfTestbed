@@ -1,37 +1,35 @@
-﻿using System.Collections.Immutable;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Bencodex;
 using Bencodex.Types;
-using Libplanet.Common;
-using VrfTestbed.VrfLib;
+using VrfTestbed.VrfCrypto;
 
 namespace VrfTestbed.Consensus
 {
     public class Lot : ILotMetadata, IEquatable<Lot>, IBencodable
     {
-        private static readonly Binary SignatureKey = new Binary(new byte[] { 0x53 }); // 'S'
-        private static readonly Binary BlsPublicKeyKey = new Binary(new byte[] { 0x50 }); // 'P'
+        private static readonly Binary ProofKey = new Binary(new byte[] { 0x70 }); // 'p'
+        private static readonly Binary PublicKeyKey = new Binary(new byte[] { 0x50 }); // 'P'
 
         private static readonly Codec _codec = new Codec();
         private readonly LotMetadata _metadata;
 
         public Lot(
             LotMetadata metadata,
-            BlsPublicKey blsPublicKey,
-            BlsSignature signature)
+            PublicKey publicKey,
+            Proof proof)
         {
-            if (!blsPublicKey.Verify(_codec.Encode(metadata.Bencoded), signature))
+            if (!publicKey.VerifyProof(_codec.Encode(metadata.Bencoded), proof))
             {
                 throw new ArgumentException(
-                    $"Given {nameof(signature)} is invalid.",
-                    nameof(signature));
+                    $"Given {nameof(proof)} is invalid.",
+                    nameof(proof));
             }
 
             _metadata = metadata;
-            BlsPublicKey = blsPublicKey;
-            Signature = signature;
+            PublicKey = publicKey;
+            Proof = proof;
         }
 
         public Lot(Bencodex.Types.IValue bencoded)
@@ -48,8 +46,8 @@ namespace VrfTestbed.Consensus
         private Lot(Bencodex.Types.Dictionary encoded)
             : this(
                 new LotMetadata((IValue)encoded),
-                new BlsPublicKey(((Binary)encoded[BlsPublicKeyKey]).ByteArray),
-                new BlsSignature(((Binary)encoded[SignatureKey]).ByteArray))
+                new PublicKey(((Binary)encoded[PublicKeyKey]).ByteArray),
+                new Proof(((Binary)encoded[ProofKey]).ByteArray))
         {
         }
 #pragma warning restore SA1118
@@ -58,27 +56,26 @@ namespace VrfTestbed.Consensus
 
         public int Round => _metadata.Round;
 
-        public BlsPublicKey BlsPublicKey { get; }
+        public PublicKey PublicKey { get; }
 
-        public BlsSignature Signature { get; }
+        public Proof Proof { get; }
 
         [JsonIgnore]
         public Bencodex.Types.IValue Bencoded
             => ((Bencodex.Types.Dictionary)_metadata.Bencoded)
-                .Add(BlsPublicKeyKey, BlsPublicKey.ByteArray)
-                .Add(SignatureKey, Signature.ByteArray);
+                .Add(PublicKeyKey, PublicKey.Format(true))
+                .Add(ProofKey, Proof.ByteArray);
 
         [Pure]
         public bool Verify() 
-            => BlsPublicKey.Verify(
-                _codec.Encode(_metadata.Bencoded).ToImmutableArray(), Signature);
+            => PublicKey.VerifyProof(_codec.Encode(_metadata.Bencoded), Proof);
 
         [Pure]
         public bool Equals(Lot? other)
         {
             return other is Lot lot &&
                 _metadata.Equals(lot._metadata) &&
-                Signature.Equals(lot.Signature);
+                Proof.Equals(lot.Proof);
         }
 
         [Pure]
@@ -92,7 +89,7 @@ namespace VrfTestbed.Consensus
         {
             return HashCode.Combine(
                 _metadata.GetHashCode(),
-                ByteUtil.CalculateHashCode(Signature.ToByteArray()));
+                Proof.GetHashCode());
         }
 
         /// <inheritdoc/>
@@ -101,7 +98,7 @@ namespace VrfTestbed.Consensus
         {
             var dict = new Dictionary<string, object>
             {
-                { "bls_public_key", BlsPublicKey.ToString() },
+                { "public_key", PublicKey.ToString() },
                 { "height", Height },
                 { "round", Round },
             };

@@ -1,13 +1,14 @@
-﻿using VrfTestbed.VrfLib;
-using VrfTestbed.Consensus;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Threading.Channels;
+using VrfTestbed.Consensus;
+using VrfTestbed.VrfLib;
+using VrfTestbed.VrfCrypto;
 
 namespace VrfTestbed.VrfAgent
 {
     public class Agent : IDisposable
     {
-        protected BlsPrivateKey _blsPrivateKey;
+        protected PrivateKey _privateKey;
         protected ConcurrentDictionary<(long, int), ProofSet> _proofSets;
         protected long _height;
         protected int _round;
@@ -17,9 +18,9 @@ namespace VrfTestbed.VrfAgent
         private readonly CancellationTokenSource _cancellationTokenSource;
 
 
-        public Agent(BlsPrivateKey blsPrivateKey)
+        public Agent(PrivateKey PrivateKey)
         {
-            _blsPrivateKey = blsPrivateKey;
+            _privateKey = PrivateKey;
             _proofSets = new ConcurrentDictionary<(long, int), ProofSet>();
             _peers = new HashSet<Agent>();
             _validatorSet = new ValidatorSet();
@@ -73,7 +74,7 @@ namespace VrfTestbed.VrfAgent
         }
 
         public Lot GenerateLot(long height, int round)
-            => new LotMetadata(height, round).Sign(_blsPrivateKey);
+            => new LotMetadata(height, round).Sign(_privateKey);
 
         public void InsertLot()
         {
@@ -120,10 +121,10 @@ namespace VrfTestbed.VrfAgent
         private async Task ConsumeLot(CancellationToken cancellationToken)
         {
             Lot lot = await _lotRequests.Reader.ReadAsync(cancellationToken);
-            if (_validatorSet.GetValidator(lot.BlsPublicKey) is Validator validator)
+            if (_validatorSet.GetValidator(lot.PublicKey) is Validator validator)
             {
                 ProofSet proofSet = _proofSets.GetOrAdd((lot.Height, lot.Round), new ProofSet(lot.Height, lot.Round));
-                _ = Task.Run(() => proofSet.Add(lot.BlsPublicKey, lot.Signature, validator.Power));
+                _ = Task.Run(() => proofSet.Add(lot.PublicKey, lot.Proof, validator.Power));
             }
         }
 
@@ -144,6 +145,6 @@ namespace VrfTestbed.VrfAgent
             _lotRequests.Writer.TryComplete();
         }
 
-        public BlsPublicKey BlsPublicKey => _blsPrivateKey.PublicKey;
+        public PublicKey PublicKey => _privateKey.PublicKey;
     }
 }

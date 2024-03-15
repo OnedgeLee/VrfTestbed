@@ -1,11 +1,12 @@
 ﻿using VrfTestbed.VrfLib;
 using VrfTestbed.Consensus;
+using VrfTestbed.VrfCrypto;
 
 namespace VrfTestbed.VrfAgent
 {
     public class DummyAgent : Agent
     {
-        public DummyAgent(BlsPrivateKey blsPrivateKey)
+        public DummyAgent(PrivateKey blsPrivateKey)
             :base(blsPrivateKey) 
         {
         }
@@ -22,6 +23,6 @@ namespace VrfTestbed.VrfAgent
         {
         }
 
-        public BlsPrivateKey PrivateKey => _blsPrivateKey;
+        public PrivateKey PrivateKey => _privateKey;
     }
 }

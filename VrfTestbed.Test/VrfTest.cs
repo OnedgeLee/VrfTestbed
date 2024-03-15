@@ -1,19 +1,20 @@
 using System.Numerics;
 using VrfTestbed.Consensus;
+using VrfTestbed.VrfCrypto;
 using VrfTestbed.VrfLib;
 
 namespace VrfTestbed.Test
 {
     public class VrfTest
     {
-        public ProofSet ConstructProofSet(long height, int round, IEnumerable<BlsPrivateKey> privateKeys)
+        public ProofSet ConstructProofSet(long height, int round, IEnumerable<PrivateKey> privateKeys)
         {
             var payload = new LotMetadata(height, round).ByteArray;
             var sigs = privateKeys.Select(key => key.Sign(payload));
             var proofSet = new ProofSet(payload);
             foreach (var pk in privateKeys)
             {
-                proofSet.Add(pk.PublicKey, pk.Sign(payload), BigInteger.One);
+                proofSet.Add(pk.PublicKey, pk.Prove(payload), BigInteger.One);
             }
 
             return proofSet;
@@ -23,11 +24,11 @@ namespace VrfTestbed.Test
         [Fact]
         public void DeterministicSortition()
         {
-            var privateKeys = new BlsPrivateKey[]
+            var privateKeys = new PrivateKey[]
             { 
-                new BlsPrivateKey(), 
-                new BlsPrivateKey(), 
-                new BlsPrivateKey()
+                new PrivateKey(), 
+                new PrivateKey(), 
+                new PrivateKey()
             };
 
             ValidatorSet validatorSet = new ValidatorSet();
@@ -49,11 +50,11 @@ namespace VrfTestbed.Test
         [Fact]
         public void DeterministicSeed()
         {
-            var privateKeys = new BlsPrivateKey[]
+            var privateKeys = new PrivateKey[]
             {
-                new BlsPrivateKey(),
-                new BlsPrivateKey(),
-                new BlsPrivateKey()
+                new PrivateKey(),
+                new PrivateKey(),
+                new PrivateKey()
             };
 
             ValidatorSet validatorSet = new ValidatorSet();

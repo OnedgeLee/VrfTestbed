@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using VrfTestbed.VrfLib;
+using VrfTestbed.VrfCrypto;
 
 namespace VrfTestbed.Test
 {

@@ -1,5 +1,6 @@
 ﻿using VrfTestbed.VrfLib;
 using VrfTestbed.Consensus;
+using VrfTestbed.VrfCrypto;
 
 namespace VrfTestbed.VrfAgent
 {
@@ -7,7 +8,7 @@ namespace VrfTestbed.VrfAgent
     {
         private List<Lot> _receivedLots;
 
-        public ByzantineAgent(BlsPrivateKey blsPrivateKey)
+        public ByzantineAgent(PrivateKey blsPrivateKey)
             :base(blsPrivateKey) 
         {
             _receivedLots = new List<Lot>();
@@ -26,6 +27,6 @@ namespace VrfTestbed.VrfAgent
             _receivedLots.Add(lot);
         }
 
-        public BlsPrivateKey PrivateKey => _blsPrivateKey;
+        public PrivateKey PrivateKey => _privateKey;
     }
 }

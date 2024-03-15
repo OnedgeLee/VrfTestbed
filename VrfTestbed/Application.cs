@@ -2,7 +2,7 @@
 using System.Numerics;
 using VrfTestbed.Consensus;
 using VrfTestbed.VrfAgent;
-using VrfTestbed.VrfLib;
+using VrfTestbed.VrfCrypto;
 
 namespace VrfTestbed
 {
@@ -57,8 +57,8 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
         {
             try
             {
-                Agent agent = new Agent(new BlsPrivateKey());
-                Console.WriteLine($"Added new agent : {agent.BlsPublicKey}");
+                Agent agent = new Agent(new PrivateKey());
+                Console.WriteLine($"Added new agent : {agent.PublicKey}");
                 _agents.Add(agent);
             }
             catch (Exception ex)
@@ -71,11 +71,11 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
         {
             try
             {
-                Agent agent = new Agent(new BlsPrivateKey());
+                Agent agent = new Agent(new PrivateKey());
                 _agents.Add(agent);
                 UpdateValidatorSet(_agents.Count - 1, power);
                 ApplyValidatorSet();
-                Console.WriteLine($"Added new agent : {agent.BlsPublicKey}:{power}");
+                Console.WriteLine($"Added new agent : {agent.PublicKey}:{power}");
             }
             catch (Exception ex)
             {
@@ -87,8 +87,8 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
         {
             try
             {
-                Agent agent = new ByzantineAgent(new BlsPrivateKey());
-                Console.WriteLine($"Added new byzantine : {agent.BlsPublicKey}");
+                Agent agent = new ByzantineAgent(new PrivateKey());
+                Console.WriteLine($"Added new byzantine : {agent.PublicKey}");
                 _agents.Add(agent);
             }
             catch (Exception ex)
@@ -101,8 +101,8 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
         {
             try
             {
-                Agent agent = new DummyAgent(new BlsPrivateKey());
-                Console.WriteLine($"Added new dummy : {agent.BlsPublicKey}");
+                Agent agent = new DummyAgent(new PrivateKey());
+                Console.WriteLine($"Added new dummy : {agent.PublicKey}");
                 _agents.Add(agent);
             }
             catch (Exception ex)
@@ -115,11 +115,11 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
         {
             try
             {
-                Agent agent = new DummyAgent(new BlsPrivateKey());
+                Agent agent = new DummyAgent(new PrivateKey());
                 _agents.Add(agent);
                 UpdateValidatorSet(_agents.Count - 1, power);
                 ApplyValidatorSet();
-                Console.WriteLine($"Added new agent : {agent.BlsPublicKey}:{power}");
+                Console.WriteLine($"Added new agent : {agent.PublicKey}:{power}");
             }
             catch (Exception ex)
             {
@@ -136,11 +136,11 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
                 {
                     if (item.value is ByzantineAgent byzantine)
                     {
-                        Console.WriteLine($"{item.index} : {item.value.BlsPublicKey} : Byzantine : {item.value.Height} : {item.value.Round}");
+                        Console.WriteLine($"{item.index} : {item.value.PublicKey} : Byzantine : {item.value.Height} : {item.value.Round}");
                     }
                     else
                     {
-                        Console.WriteLine($"{item.index} : {item.value.BlsPublicKey} : Innocent : {item.value.Height} : {item.value.Round}");
+                        Console.WriteLine($"{item.index} : {item.value.PublicKey} : Innocent : {item.value.Height} : {item.value.Round}");
                     }
 
                 }
@@ -155,7 +155,7 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
         {
             try
             {
-                Console.WriteLine($"Removing agent at {index}: {_agents[index].BlsPublicKey}");
+                Console.WriteLine($"Removing agent at {index}: {_agents[index].PublicKey}");
                 _agents.RemoveAt(index);
             }
             catch (Exception ex)
@@ -190,7 +190,7 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
             {
                 foreach (var peer in _agents[index].Peers)
                 {
-                    Console.WriteLine(peer.BlsPublicKey);
+                    Console.WriteLine(peer.PublicKey);
                 }
             }
             catch (Exception ex)
@@ -242,8 +242,8 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
         {
             try
             {
-                _validatorSet = _validatorSet.Update(new Validator(_agents[index].BlsPublicKey, new BigInteger(power)));
-                Console.WriteLine($"Updated validator : {_agents[index].BlsPublicKey} : {power}");
+                _validatorSet = _validatorSet.Update(new Validator(_agents[index].PublicKey, new BigInteger(power)));
+                Console.WriteLine($"Updated validator : {_agents[index].PublicKey} : {power}");
             }
             catch (Exception ex)
             {
@@ -295,11 +295,11 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
                 {
                     if (item.value is ByzantineAgent byzantine)
                     {
-                        Console.WriteLine($"{item.index} : {item.value.BlsPublicKey} : Byzantine : {item.value.Seed()}");
+                        Console.WriteLine($"{item.index} : {item.value.PublicKey} : Byzantine : {item.value.Seed()}");
                     }
                     else
                     {
-                        Console.WriteLine($"{item.index} : {item.value.BlsPublicKey} : Innocent : {item.value.Seed()}");
+                        Console.WriteLine($"{item.index} : {item.value.PublicKey} : Innocent : {item.value.Seed()}");
                     }
 
                 }
@@ -318,11 +318,11 @@ power from sheet: Add agents and update validator set from the sheet. (0-idx val
                 {
                     if (item.value is ByzantineAgent byzantine)
                     {
-                        Console.WriteLine($"{item.index} : {item.value.BlsPublicKey} : Byzantine : {item.value.GetProposer()}");
+                        Console.WriteLine($"{item.index} : {item.value.PublicKey} : Byzantine : {item.value.GetProposer()}");
                     }
                     else
                     {
-                        Console.WriteLine($"{item.index} : {item.value.BlsPublicKey} : Innocent : {item.value.GetProposer()}");
+                        Console.WriteLine($"{item.index} : {item.value.PublicKey} : Innocent : {item.value.GetProposer()}");
                     }
 
                 }

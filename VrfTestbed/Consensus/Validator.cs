@@ -2,17 +2,31 @@
 using System.Text.Json.Serialization;
 using Bencodex;
 using Bencodex.Types;
-using VrfTestbed.VrfLib;
+using VrfTestbed.VrfCrypto;
 
 namespace VrfTestbed.Consensus
 {
+    /// <summary>
+    /// A class designed for a <see langword="Validator"/> of consensus.
+    /// A <see cref="Validator"/> consists of operator's <see cref="PublicKey"/>
+    /// and its corresponding <see langword="Power"/>.
+    /// </summary>
     public class Validator : IEquatable<Validator>, IBencodable
     {
         private static readonly Binary PublicKeyKey = new Binary(new byte[] { 0x50 }); // 'P'
         private static readonly Binary PowerKey = new Binary(new byte[] { 0x70 });     // 'p'
 
+        /// <summary>
+        /// Creates an instance of <see cref="Validator"/>, with given <paramref name="publicKey"/>
+        /// and <paramref name="power"/>.
+        /// </summary>
+        /// <param name="publicKey">The <see cref="Libplanet.Crypto.PublicKey"/>
+        /// of validator operator.</param>
+        /// <param name="power">The <see langword="Power"/> of validator operator.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="power"/> is
+        /// negative.</exception>
         public Validator(
-            BlsPublicKey publicKey,
+            PublicKey publicKey,
             BigInteger power)
         {
             if (power < BigInteger.Zero)
@@ -38,18 +52,31 @@ namespace VrfTestbed.Consensus
 
         private Validator(Bencodex.Types.Dictionary bencoded)
             : this(
-                new BlsPublicKey(((Binary)bencoded[PublicKeyKey]).ByteArray),
+                new PublicKey(((Binary)bencoded[PublicKeyKey]).ByteArray),
                 (Integer)bencoded[PowerKey])
         {
         }
 
-        public BlsPublicKey PublicKey { get; }
+        /// <summary>
+        /// A <see cref="PublicKey"/> of validator operator.
+        /// </summary>
+        public PublicKey PublicKey { get; }
 
+        /// <summary>
+        /// The <see langword="Power"/> of validator.
+        /// </summary>
         public BigInteger Power { get; }
 
+        /// <summary>
+        /// An <see cref="Address"/> of the validator operator's <see cref="PublicKey"/>.
+        /// </summary>
+        [JsonIgnore]
+        public Address OperatorAddress => PublicKey.Address;
+
+        /// <inheritdoc/>
         [JsonIgnore]
         public Bencodex.Types.IValue Bencoded => Dictionary.Empty
-            .Add(PublicKeyKey, PublicKey.ByteArray)
+            .Add(PublicKeyKey, PublicKey.Format(true))
             .Add(PowerKey, Power);
 
         public static bool operator ==(Validator obj, Validator other)
@@ -62,6 +89,7 @@ namespace VrfTestbed.Consensus
             return !(obj == other);
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             if (obj is Validator other)
@@ -72,16 +100,19 @@ namespace VrfTestbed.Consensus
             return false;
         }
 
+        /// <inheritdoc/>
         public bool Equals(Validator? other)
         {
             return PublicKey.Equals(other?.PublicKey) && Power.Equals(other?.Power);
         }
 
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             return HashCode.Combine(PublicKey, Power);
         }
 
+        /// <inheritdoc/>
         public override string ToString() => $"{PublicKey}:{Power}";
     }
 }

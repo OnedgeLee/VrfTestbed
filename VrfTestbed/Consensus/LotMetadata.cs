@@ -2,7 +2,7 @@
 using System.Text.Json.Serialization;
 using Bencodex;
 using Bencodex.Types;
-using VrfTestbed.VrfLib;
+using VrfTestbed.VrfCrypto;
 
 namespace VrfTestbed.Consensus
 {
@@ -71,8 +71,8 @@ namespace VrfTestbed.Consensus
 
         public ImmutableArray<byte> ByteArray => ToByteArray().ToImmutableArray();
 
-        public Lot Sign(BlsPrivateKey signer)
-            => new Lot(this, signer.PublicKey, signer.Sign(_codec.Encode(Bencoded)));
+        public Lot Sign(PrivateKey signer)
+            => new Lot(this, signer.PublicKey, signer.Prove(_codec.Encode(Bencoded)));
 
         /// <inheritdoc/>
         public bool Equals(LotMetadata? other)
