@@ -1,6 +1,6 @@
-﻿using VrfTestbed.VrfLib;
-using VrfTestbed.Consensus;
+﻿using VrfTestbed.Consensus;
 using VrfTestbed.VrfCrypto;
+using VrfTestbed.VrfLib;
 
 namespace VrfTestbed.VrfAgent
 {

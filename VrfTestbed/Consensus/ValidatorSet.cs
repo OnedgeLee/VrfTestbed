@@ -1,10 +1,8 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Numerics;
 using Bencodex;
 using VrfTestbed.VrfCrypto;
-using Libplanet.Types.Blocks;
 
 namespace VrfTestbed.Consensus
 {

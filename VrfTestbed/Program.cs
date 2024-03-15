@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-
-namespace VrfTestbed
+﻿namespace VrfTestbed
 {
     public class Program
     {

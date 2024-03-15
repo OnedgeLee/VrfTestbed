@@ -1,8 +1,6 @@
-﻿using Libplanet.Common;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Numerics;
-using System.Security.Cryptography;
-
+using Libplanet.Common;
 
 namespace VrfTestbed.VrfCrypto
 {

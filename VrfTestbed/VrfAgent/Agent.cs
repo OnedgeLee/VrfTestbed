@@ -1,8 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading.Channels;
 using VrfTestbed.Consensus;
-using VrfTestbed.VrfLib;
 using VrfTestbed.VrfCrypto;
+using VrfTestbed.VrfLib;
 
 namespace VrfTestbed.VrfAgent
 {

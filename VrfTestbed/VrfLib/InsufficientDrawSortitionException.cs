@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace VrfTestbed.VrfLib
+﻿namespace VrfTestbed.VrfLib
 {
     public class InsufficientDrawSortitionException : Exception
     {
