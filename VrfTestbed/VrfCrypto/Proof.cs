@@ -30,7 +30,8 @@ namespace VrfTestbed.VrfCrypto
                 }
                 else
                 {
-                    _hash = HashDigest<SHA512>.DeriveFrom(ByteArray).ByteArray;
+                    _hash = CryptoConfig.ConsensusCryptoBackend
+                        .ProofToHash(ToByteArray()).ToImmutableArray();
                     return (ImmutableArray<byte>)_hash;
                 }
             }
